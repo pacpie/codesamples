@@ -163,7 +163,142 @@ public partial class HEP_prescriptions : System.Web.UI.Page
         getSecurityAccess(rowSelected);
     }
 
-    private void getSecurityAccess(bool rowSelected)
+    private void DefaultState()
+    {   
+        //The default state a user should be in after a Save or Revert.
+        changecontrolstate(true);
+        TabContainer1.ActiveTabIndex = 0;
+        BtnAdd.Text = "Add";
+        BtnEdit.Text = "Edit";
+        BtnEdit.Enabled = false;
+        BtnDelete.Enabled = false;
+        clearoutdata();
+    }
+    private void InsertEditState()
+    {   
+        //Any time a user is in INSERT or EDIT mode.
+        changecontrolstate(false);
+        TabContainer1.ActiveTabIndex = 1;
+        BtnAdd.Text = "Save";
+        BtnEdit.Text = "Revert";
+        BtnDelete.Enabled = false;    
+    }
+
+    protected void showpersoninfo(string key)
+    {
+        using (var reader = SqlHelper.ExecuteReader(con, CommandType.Text, "Select * from prescriptions where prescriptpk = " + key))
+        {
+            while (reader.Read())
+            {
+                TxtKey.Text = reader["prescriptpk"].ToString();
+                TxtDate.Text = reader["date"].ToString();
+                String junk = reader["arcfk"].ToString();
+                DDLFullName.SelectedValue = junk;
+                DDLFullName.DataBind();
+                chkOT.Checked = reader["OT"].ToString() == "True" ? true : false;
+                chkPT.Checked = reader["PT"].ToString() == "True" ? true : false;
+                chkPS.Checked = reader["PS"].ToString() == "True" ? true : false;
+                chkSA.Checked = reader["SA"].ToString() == "True" ? true : false;
+                chkEC.Checked = reader["EC"].ToString() == "True" ? true : false;
+                chkNC.Checked = reader["NC"].ToString() == "True" ? true : false;
+                junk = reader["reason"].ToString();
+                if (junk.ToLower().StartsWith("other") == true)
+                {
+                    if (junk.ToLower().Contains("other-") == true)
+                    {
+                        String junk1;
+                        String[] strSplit = junk.Split('-');
+                        junk1 = strSplit[1];
+                        junk = strSplit[0]; //expected to be "Other"
+                        divOther.Visible = true;
+                        txtOtherReason.Text = junk1;
+                    }
+                    else
+                    {
+                        //Other was there but reason was not found as part of it
+                        divOther.Visible = true;
+                        txtOtherReason.Text = "";
+                    }
+                }
+                else
+                {
+                    divOther.Visible = false;
+                    txtOtherReason.Text = "";
+                }
+                DDLReason.Text = junk;
+                DDLReason.DataBind();
+                    TxtSentTo.Text = reader["sentto"].ToString();
+                DDLSentVia.SelectedValue = reader["sentvia"].ToString().TrimEnd();
+                DDLSentVia.DataBind();
+                TxtDateRec.Text = reader["datereceived"].ToString();
+                txtDateSigned.Text = reader["dateSigned"].ToString();
+                txtComments.Text = reader["comments"].ToString();
+                TxtEffBeg.Text = reader["effbeg"].ToString();
+                TxtEffEnd.Text = reader["effend"].ToString();
+                txtDocumentation.Text = reader["documentation"].ToString();
+            }
+        }
+    }
+
+    protected void clearoutdata()
+    {
+        isDelete = false;
+        TxtKey.Text = "";
+        TxtDate.Text = "";
+        DDLReason.SelectedIndex = 0;
+        TxtEffBeg.Text = "";
+        TxtEffEnd.Text = "";
+        TxtSentTo.Text = "";
+        DDLSentVia.SelectedIndex = 0;
+        TxtDateRec.Text = "";
+        txtDateSigned.Text = "";
+        txtComments.Text = "";
+        txtDocumentation.Text = "";
+        chkOT.Checked = false;
+        chkPT.Checked = false;
+        chkPS.Checked = false;
+        chkSA.Checked = false;
+        chkEC.Checked = false;
+        chkNC.Checked = false;
+    }
+
+    protected void changecontrolstate(Boolean tflag)
+    {
+        TabGV.Enabled = tflag;
+        TreeView thetreeview = (TreeView)Master.FindControl("TreeView1");
+        thetreeview.Enabled = tflag;
+        TxtDate.ReadOnly = tflag;
+        DDLFullName.Enabled = !tflag;
+        TxtKey.ReadOnly = tflag;
+        DDLReason.Enabled = !tflag;
+        txtOtherReason.Enabled = !tflag;
+        TxtEffBeg.ReadOnly = tflag;
+        TxtEffEnd.ReadOnly = tflag;
+        TxtSentTo.ReadOnly = tflag;
+        DDLSentVia.Enabled = !tflag;
+        TxtDateRec.ReadOnly = tflag;
+        txtDateSigned.ReadOnly = tflag;
+        txtComments.ReadOnly = tflag;
+        txtDocumentation.ReadOnly = tflag;
+        chkOT.Enabled = !tflag;
+        chkPT.Enabled = !tflag;
+        chkPS.Enabled = !tflag;
+        chkSA.Enabled = !tflag;
+        chkEC.Enabled = !tflag;
+        chkNC.Enabled = !tflag;
+        ImageButton1.Visible = !tflag;
+        CalendarExtender1.Enabled = !tflag;
+        ImageButton2.Visible = !tflag;
+        CalendarExtender2.Enabled = !tflag;
+        ImageButton3.Visible = !tflag;
+        CalendarExtender3.Enabled = !tflag;
+        ImageButton4.Visible = !tflag;
+        CalendarExtender4.Enabled = !tflag;
+        ImageButton5.Visible = !tflag;
+        CalendarExtender5.Enabled = !tflag;
+    }
+    
+        private void getSecurityAccess(bool rowSelected)
     {
         if (!rowSelected)  
         {
@@ -268,143 +403,6 @@ public partial class HEP_prescriptions : System.Web.UI.Page
             }
         }
     }
-
-    private void DefaultState()
-    {   
-        //The default state a user should be in after a Save or Revert.
-        changecontrolstate(true);
-        TabContainer1.ActiveTabIndex = 0;
-        BtnAdd.Text = "Add";
-        BtnEdit.Text = "Edit";
-        BtnEdit.Enabled = false;
-        BtnDelete.Enabled = false;
-        clearoutdata();
-    }
-    private void InsertEditState()
-    {   
-        //Any time a user is in INSERT or EDIT mode.
-        changecontrolstate(false);
-        TabContainer1.ActiveTabIndex = 1;
-        BtnAdd.Text = "Save";
-        BtnEdit.Text = "Revert";
-        BtnDelete.Enabled = false;    
-    }
-
-    protected void showpersoninfo(string key)
-    {
-        using (var reader = SqlHelper.ExecuteReader(con, CommandType.Text, "Select * from prescriptions where prescriptpk = " + key))
-        {
-            while (reader.Read())
-            {
-                TxtKey.Text = reader["prescriptpk"].ToString();
-                TxtDate.Text = reader["date"].ToString();
-                String junk = reader["arcfk"].ToString();
-                DDLFullName.SelectedValue = junk;
-                DDLFullName.DataBind();
-                chkOT.Checked = reader["OT"].ToString() == "True" ? true : false;
-                chkPT.Checked = reader["PT"].ToString() == "True" ? true : false;
-                chkPS.Checked = reader["PS"].ToString() == "True" ? true : false;
-                chkSA.Checked = reader["SA"].ToString() == "True" ? true : false;
-                chkEC.Checked = reader["EC"].ToString() == "True" ? true : false;
-                chkNC.Checked = reader["NC"].ToString() == "True" ? true : false;
-                //SATHI-ADDED CODE for Reason->Other drop down.
-                junk = reader["reason"].ToString();
-                if (junk.ToLower().StartsWith("other") == true)
-                {
-                    if (junk.ToLower().Contains("other-") == true)
-                    {
-                        String junk1;
-                        String[] strSplit = junk.Split('-');
-                        junk1 = strSplit[1];
-                        junk = strSplit[0]; //expected to be "Other"
-                        divOther.Visible = true;
-                        txtOtherReason.Text = junk1;
-                    }
-                    else
-                    {
-                        //Other was there but reason was not found as part of it
-                        divOther.Visible = true;
-                        txtOtherReason.Text = "";
-                    }
-                }
-                else
-                {
-                    divOther.Visible = false;
-                    txtOtherReason.Text = "";
-                }
-                DDLReason.Text = junk;
-                DDLReason.DataBind();
-                //END of Sathi added code Reason->Other
-                TxtSentTo.Text = reader["sentto"].ToString();
-                DDLSentVia.SelectedValue = reader["sentvia"].ToString().TrimEnd();
-                DDLSentVia.DataBind();
-                TxtDateRec.Text = reader["datereceived"].ToString();
-                txtDateSigned.Text = reader["dateSigned"].ToString();
-                txtComments.Text = reader["comments"].ToString();
-                TxtEffBeg.Text = reader["effbeg"].ToString();
-                TxtEffEnd.Text = reader["effend"].ToString();
-                txtDocumentation.Text = reader["documentation"].ToString();
-            }
-        }
-    }
-
-    protected void clearoutdata()
-    {
-        isDelete = false;
-        TxtKey.Text = "";
-        TxtDate.Text = "";
-        DDLReason.SelectedIndex = 0;
-        TxtEffBeg.Text = "";
-        TxtEffEnd.Text = "";
-        TxtSentTo.Text = "";
-        DDLSentVia.SelectedIndex = 0;
-        TxtDateRec.Text = "";
-        txtDateSigned.Text = "";
-        txtComments.Text = "";
-        txtDocumentation.Text = "";
-        chkOT.Checked = false;
-        chkPT.Checked = false;
-        chkPS.Checked = false;
-        chkSA.Checked = false;
-        chkEC.Checked = false;
-        chkNC.Checked = false;
-    }
-
-    protected void changecontrolstate(Boolean tflag)
-    {
-        TabGV.Enabled = tflag;
-        TreeView thetreeview = (TreeView)Master.FindControl("TreeView1");
-        thetreeview.Enabled = tflag;
-        TxtDate.ReadOnly = tflag;
-        DDLFullName.Enabled = !tflag;
-        TxtKey.ReadOnly = tflag;
-        DDLReason.Enabled = !tflag;
-        txtOtherReason.Enabled = !tflag;
-        TxtEffBeg.ReadOnly = tflag;
-        TxtEffEnd.ReadOnly = tflag;
-        TxtSentTo.ReadOnly = tflag;
-        DDLSentVia.Enabled = !tflag;
-        TxtDateRec.ReadOnly = tflag;
-        txtDateSigned.ReadOnly = tflag;
-        txtComments.ReadOnly = tflag;
-        txtDocumentation.ReadOnly = tflag;
-        chkOT.Enabled = !tflag;
-        chkPT.Enabled = !tflag;
-        chkPS.Enabled = !tflag;
-        chkSA.Enabled = !tflag;
-        chkEC.Enabled = !tflag;
-        chkNC.Enabled = !tflag;
-        ImageButton1.Visible = !tflag;
-        CalendarExtender1.Enabled = !tflag;
-        ImageButton2.Visible = !tflag;
-        CalendarExtender2.Enabled = !tflag;
-        ImageButton3.Visible = !tflag;
-        CalendarExtender3.Enabled = !tflag;
-        ImageButton4.Visible = !tflag;
-        CalendarExtender4.Enabled = !tflag;
-        ImageButton5.Visible = !tflag;
-        CalendarExtender5.Enabled = !tflag;
-    }
     
     /// <summary>
     /// Handler for "Other" in "Reason for Rx" dropdown list
@@ -444,6 +442,7 @@ public partial class HEP_prescriptions : System.Web.UI.Page
         Response.Redirect(url, false);
 
     }
+    
 }
    
 
